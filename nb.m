@@ -1,4 +1,4 @@
-function [hloss, presicion, recall , M_prob, M_pc, M_pnc, M_corr, M_res, M_threshold, M_fdnc, M_fdc, M_ptc, M_ptnc, M_dinc, M_dinnc, M_dincwithf, M_dinncwithf] = nb( train_data, train_target, test_data, test_target )
+function [M_res] = nb( train_data, train_target, test_data, test_target )
     
     % Guardamos los largos de las Matrices de entrada
     % -> num_class      : número de clases
@@ -50,11 +50,15 @@ function [hloss, presicion, recall , M_prob, M_pc, M_pnc, M_corr, M_res, M_thres
     M_pnc = zeros(num_class, 2);
     
     for class_i=1:num_class
-        M_pc(class_i,1) = M_dinc(class_i, 1)/num_train_docs;
-        %M_pc(class_i,1) = M_dinc(class_i, 1)/sum(M_dinc(:, 1));
-        M_pc(class_i,2) = max(log10(M_pc(class_i, 1)), -100);
-        M_pnc(class_i,1) = M_dinnc(class_i, 1)/num_train_docs;
-        M_pc(class_i,2) = max(log10(M_pnc(class_i, 1)), -100);
+        M_pc(class_i,1) = (M_dinc(class_i, 1)+1)/(num_train_docs + num_class);
+        M_pc(class_i,2) = log10(M_pc(class_i, 1));
+        M_pnc(class_i,1) = (M_dinnc(class_i, 1) + 1)/(num_train_docs + num_class);
+        M_pnc(class_i,2) = log10(M_pnc(class_i, 1));
+        
+        %M_pc(class_i,1) = M_dinc(class_i, 1)/num_train_docs;
+        %M_pc(class_i,2) = max(log10(M_pc(class_i, 1)), -100);
+        %M_pnc(class_i,1) = M_dinnc(class_i, 1)/num_train_docs;
+        %M_pnc(class_i,2) = max(log10(M_pnc(class_i, 1)), -100);
     end
     
     % Guardamos la P(t_i|c) y P(t_i|¬c)
@@ -90,9 +94,9 @@ function [hloss, presicion, recall , M_prob, M_pc, M_pnc, M_corr, M_res, M_thres
     
     % Contamos y sumamos los número distintos de 0 y 1 para calcular un
     % threshold
-    corr_count = sum(sum(M_corr~=0&M_corr~=1));
-    corr_sum = sum(M_corr(M_corr~=1&M_corr~=0));
-    corr_thres = 5*corr_sum/corr_count;
+    % corr_count = sum(sum(M_corr~=0&M_corr~=1));
+    % corr_sum = sum(M_corr(M_corr~=1&M_corr~=0));
+    corr_thres = 0.4;
     
     M_corr2 = M_corr;
     
@@ -118,7 +122,7 @@ function [hloss, presicion, recall , M_prob, M_pc, M_pnc, M_corr, M_res, M_thres
             end
                 %M_fdc(class_i, doc_i)  = (fdc + M_pc(class_i, 2));
                 M_fdc(class_i, doc_i)  = fdc;
-                M_fdnc(class_i, doc_i) = (fdnc + M_pnc(class_i, 2));
+                %M_fdnc(class_i, doc_i) = fdnc + M_pnc(class_i, 2);
                 M_prob(class_i, doc_i) = M_fdc(class_i, doc_i) - M_fdnc(class_i, doc_i);
         end
     end
@@ -155,35 +159,8 @@ function [hloss, presicion, recall , M_prob, M_pc, M_pnc, M_corr, M_res, M_thres
         end
     end
     
-    % MEDIDAS DE DESEMPEÑO
-    incorrect_labels = 0;
-    TP = 0;
-    TN = 0;
-    FP = 0;
-    FN = 0;
+    get_measures(M_res, test_target);
     
-    for class_i=1:num_class
-        for doc_i=1:num_test_docs
-            if(M_res(class_i, doc_i) ~= test_target(class_i, doc_i))
-                incorrect_labels = incorrect_labels + 1;
-            end
-            if (M_res(class_i, doc_i) == 1 && test_target(class_i, doc_i) == 1)
-                TP = TP + 1; 
-            end
-            if (M_res(class_i, doc_i) == 1 && test_target(class_i, doc_i) == 0)
-                FP = FP + 1; 
-            end
-            if (M_res(class_i, doc_i) == 0 && test_target(class_i, doc_i) == 0)
-                TN = TN + 1; 
-            end
-            if (M_res(class_i, doc_i) == 0 && test_target(class_i, doc_i) == 1)
-                FN = FN + 1; 
-            end
-        end
-    end
-    hloss = incorrect_labels/(num_class*num_test_docs);
-    presicion = TP/(TP + FP);
-    recall = TP/(TP + FN);
 end
 
 
