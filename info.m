@@ -10,7 +10,7 @@ function [ doc_per_cat, doc_in_cat ] = info( train_data, train_target, test_data
        doc_per_cat(class_i, 1) = sum(test_target(class_i, :)) + sum(train_target(class_i, :));
     end
     
-    % Contiene la cantidad de documentos en 0, 1 o más clases
+    % Contiene la cantidad de documentos en 0, 1 o más clasesaaaa
     doc_in_cat = zeros(1, 3);
     for doc_i=1:num_train_docs
         num_cat = sum(train_target(:,doc_i));
